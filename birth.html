@@ -1,0 +1,1398 @@
+<!--
+  ============================================================
+  地球Online - 20级晋级庆典 · 来自另一名玩家的祝福
+  ============================================================
+
+  ★ 可替换占位符说明 ★
+  1. {{USER_NAME}} → 替换为寿星名字（当前值：喻子懿）
+     搜索代码中的 "喻子懿" 即可找到所有出现位置
+  2. 错误弹窗表情包占位：
+     - 第3屏答错弹窗中的图片：搜索 "ERROR_IMAGE_PLACEHOLDER"
+       替换为你的大拇指朝下表情包URL或base64
+     - 或者直接替换同位置的 emoji/div 为你的 <img> 标签
+
+  作者注：所有动画优先使用 CSS，JS 仅用于流程控制和事件处理。
+  适配：移动端 320px - 768px，使用 rem/vw/vh 相对单位。
+  ============================================================
+-->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>地球Online · 20级晋级庆典</title>
+<style>
+/* ============ CSS Reset & Global ============ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --gold: #ffd700;
+  --cyan: #00e5ff;
+  --deep-blue: #0a0a2e;
+  --pink: #ff6b9d;
+  --purple: #c084fc;
+  --champagne: #f7e7ce;
+  --rose: #f8bbd0;
+  --text-light: #f0e6d3;
+  --font-stack: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'WenQuanYi Micro Hei', sans-serif;
+}
+
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  font-family: var(--font-stack);
+  -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
+  background: #000;
+}
+
+/* ============ Container ============ */
+#app {
+  width: 100%; height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ============ Screen Base ============ */
+.screen {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.6s ease;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding: 1.5rem 1.2rem;
+}
+.screen.active {
+  opacity: 1;
+  pointer-events: auto;
+  z-index: 10;
+}
+.screen.fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ================================================================
+   SCREEN 1: 华丽升级动画
+   ================================================================ */
+#screen1 {
+  background: radial-gradient(ellipse at 50% 30%, #0d1b3e 0%, #06061a 60%, #020210 100%);
+  justify-content: center;
+}
+
+#screen1 canvas {
+  position: absolute; top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+}
+
+.level-display {
+  position: relative; z-index: 2;
+  text-align: center;
+}
+
+.player-name {
+  color: var(--cyan);
+  font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+  letter-spacing: 0.15em;
+  text-shadow: 0 0 20px rgba(0,229,255,0.6), 0 0 40px rgba(0,229,255,0.3);
+  margin-bottom: 0.5rem;
+  animation: fadeInDown 0.8s ease forwards;
+}
+
+.level-number {
+  font-size: clamp(5rem, 15vw, 9rem);
+  font-weight: 900;
+  color: var(--gold);
+  text-shadow:
+    0 0 10px var(--gold),
+    0 0 40px rgba(255,215,0,0.5),
+    0 0 80px rgba(255,215,0,0.3),
+    0 0 120px rgba(255,165,0,0.2);
+  line-height: 1;
+  position: relative;
+  animation: pulseGlow 1.5s ease-in-out infinite;
+}
+
+.level-label {
+  color: var(--cyan);
+  font-size: clamp(0.7rem, 2vw, 0.85rem);
+  letter-spacing: 0.3em;
+  margin-top: 0.3rem;
+  opacity: 0.85;
+}
+
+/* EXP Bar */
+.exp-bar-container {
+  width: min(280px, 75vw);
+  margin: 1.5rem auto 0;
+  position: relative; z-index: 2;
+}
+.exp-bar-label {
+  display: flex; justify-content: space-between;
+  color: var(--cyan);
+  font-size: 0.75rem;
+  margin-bottom: 0.3rem;
+  letter-spacing: 0.1em;
+}
+.exp-bar-outer {
+  width: 100%; height: 18px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 10px;
+  border: 1.5px solid rgba(0,229,255,0.3);
+  overflow: hidden;
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.4);
+}
+.exp-bar-inner {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, #00e5ff, #ffd700, #ff8c00);
+  border-radius: 10px;
+  transition: width 1.8s cubic-bezier(0.25, 0.8, 0.25, 1.2);
+  box-shadow: 0 0 20px rgba(255,215,0,0.6), inset 0 1px 0 rgba(255,255,255,0.2);
+  position: relative;
+}
+.exp-bar-inner.filled {
+  width: 100%;
+}
+
+.level-up-text {
+  position: absolute; z-index: 3;
+  left: 50%; top: 40%;
+  transform: translate(-50%, -50%) scale(0);
+  font-size: clamp(2rem, 8vw, 4rem);
+  font-weight: 900;
+  color: var(--gold);
+  text-shadow:
+    0 0 20px var(--gold),
+    0 0 60px rgba(255,215,0,0.7),
+    0 0 100px rgba(255,140,0,0.5);
+  white-space: nowrap;
+  pointer-events: none;
+  transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.level-up-text.show {
+  transform: translate(-50%, -50%) scale(1);
+  animation: levelUpShake 0.6s ease 0.3s;
+}
+
+.sub-text {
+  color: var(--cyan);
+  font-size: clamp(0.8rem, 2.2vw, 1rem);
+  text-align: center;
+  opacity: 0;
+  margin-top: 1.2rem;
+  position: relative; z-index: 2;
+  letter-spacing: 0.15em;
+  transition: opacity 0.8s ease;
+}
+.sub-text.show { opacity: 1; }
+
+.continue-btn {
+  margin-top: 1.8rem;
+  padding: 0.9rem 2.8rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0a0a2e;
+  background: linear-gradient(135deg, var(--gold), #ffaa00);
+  border: none;
+  border-radius: 50px;
+  letter-spacing: 0.15em;
+  cursor: pointer;
+  position: relative; z-index: 2;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.5s ease;
+  box-shadow: 0 0 30px rgba(255,215,0,0.5), 0 4px 15px rgba(0,0,0,0.3);
+}
+.continue-btn.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+.continue-btn:active {
+  transform: scale(0.95);
+  box-shadow: 0 0 15px rgba(255,215,0,0.3);
+}
+
+/* ================================================================
+   SCREEN 2: 过渡页 - 检测到祝福
+   ================================================================ */
+#screen2 {
+  background: radial-gradient(ellipse at 50% 50%, #1a0f00 0%, #0d0700 50%, #050300 100%);
+}
+#screen2::before {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 70vmin; height: 70vmin;
+  background: radial-gradient(circle, rgba(255,165,0,0.08) 0%, transparent 70%);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  animation: orbPulse 3s ease-in-out infinite;
+  pointer-events: none;
+}
+#screen2 .content {
+  position: relative; z-index: 2;
+  text-align: center;
+}
+#screen2 .icon-row {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  animation: float 2.5s ease-in-out infinite;
+}
+#screen2 .title {
+  color: var(--gold);
+  font-size: clamp(1rem, 3.5vw, 1.3rem);
+  margin-bottom: 0.6rem;
+  text-shadow: 0 0 15px rgba(255,215,0,0.5);
+  letter-spacing: 0.06em;
+  line-height: 1.5;
+}
+#screen2 .subtitle {
+  color: #ffb74d;
+  font-size: clamp(0.85rem, 3vw, 1rem);
+  margin-bottom: 0.6rem;
+  letter-spacing: 0.04em;
+  line-height: 1.5;
+}
+#screen2 .hint {
+  color: #ffcc80;
+  font-size: clamp(0.78rem, 2.5vw, 0.9rem);
+  margin-bottom: 2rem;
+  letter-spacing: 0.04em;
+}
+#screen2 .btn-row {
+  display: flex; gap: 1rem;
+  flex-wrap: wrap; justify-content: center;
+}
+#screen2 .btn-row button {
+  padding: 0.85rem 2rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  border-radius: 50px;
+  cursor: pointer;
+  letter-spacing: 0.1em;
+  transition: all 0.3s ease;
+  border: 2px solid var(--gold);
+  background: rgba(255,215,0,0.08);
+  color: var(--gold);
+  text-shadow: 0 0 8px rgba(255,215,0,0.4);
+  box-shadow: 0 0 20px rgba(255,165,0,0.2);
+}
+#screen2 .btn-row button:active {
+  background: rgba(255,215,0,0.2);
+  transform: scale(0.95);
+  box-shadow: 0 0 30px rgba(255,165,0,0.4);
+}
+
+/* ================================================================
+   SCREEN 3: 三道选择题
+   ================================================================ */
+#screen3 {
+  background: linear-gradient(180deg, #0d0d2b 0%, #1a1035 40%, #0d0d2b 100%);
+  justify-content: flex-start;
+  padding-top: 1rem;
+}
+#screen3 .progress-wrap {
+  width: min(300px, 80vw);
+  margin-bottom: 1.5rem;
+  position: sticky; top: 0;
+  z-index: 5;
+  background: rgba(13,13,43,0.85);
+  backdrop-filter: blur(8px);
+  padding: 0.6rem 0;
+  border-radius: 0 0 16px 16px;
+}
+#screen3 .progress-label {
+  display: flex; justify-content: space-between;
+  color: var(--cyan);
+  font-size: 0.7rem;
+  margin-bottom: 0.3rem;
+  letter-spacing: 0.08em;
+}
+#screen3 .progress-bar-outer {
+  width: 100%; height: 10px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 5px;
+  overflow: hidden;
+  border: 1px solid rgba(0,229,255,0.25);
+}
+#screen3 .progress-bar-inner {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, #00e5ff, #7c4dff);
+  border-radius: 5px;
+  transition: width 0.5s ease;
+  box-shadow: 0 0 12px rgba(124,77,255,0.6);
+}
+#screen3 .question-card {
+  width: min(340px, 88vw);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 20px;
+  padding: 1.5rem 1.2rem;
+  backdrop-filter: blur(6px);
+  position: relative;
+  z-index: 2;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+#screen3 .question-num {
+  color: var(--cyan);
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  margin-bottom: 0.4rem;
+}
+#screen3 .question-text {
+  color: #e8e0f0;
+  font-size: clamp(0.95rem, 3.2vw, 1.1rem);
+  font-weight: 600;
+  margin-bottom: 1.2rem;
+  line-height: 1.5;
+}
+#screen3 .options {
+  display: flex; flex-direction: column;
+  gap: 0.6rem;
+}
+#screen3 .option-btn {
+  padding: 0.8rem 1.2rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #d0c8e8;
+  background: rgba(255,255,255,0.06);
+  border: 1.5px solid rgba(255,255,255,0.15);
+  border-radius: 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.25s ease;
+  letter-spacing: 0.04em;
+}
+#screen3 .option-btn:active { background: rgba(255,255,255,0.12); transform: scale(0.98); }
+#screen3 .option-btn.wrong {
+  border-color: #ff5252;
+  background: rgba(255,82,82,0.1);
+  color: #ff6b6b;
+  animation: shake 0.5s ease;
+}
+#screen3 .option-btn.correct {
+  border-color: #4caf50;
+  background: rgba(76,175,80,0.15);
+  color: #81c784;
+}
+#screen3 .option-btn.disabled {
+  pointer-events: none;
+  opacity: 0.7;
+}
+#screen3 .tease-text {
+  color: #ffb74d;
+  font-size: 0.7rem;
+  text-align: center;
+  margin-top: 1rem;
+  font-style: italic;
+  opacity: 0.75;
+  letter-spacing: 0.03em;
+  line-height: 1.4;
+}
+
+/* Error Modal */
+.modal-overlay {
+  position: fixed; top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 100;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.modal-overlay.show {
+  opacity: 1; pointer-events: auto;
+}
+.modal-box {
+  background: linear-gradient(135deg, #1a1028, #261840);
+  border: 2px solid rgba(255,82,82,0.4);
+  border-radius: 20px;
+  padding: 1.8rem 1.5rem;
+  text-align: center;
+  width: min(300px, 80vw);
+  box-shadow: 0 0 40px rgba(255,82,82,0.25);
+}
+.modal-box .error-emoji {
+  font-size: 4rem;
+  margin-bottom: 0.6rem;
+}
+/* 
+  ★ ERROR_IMAGE_PLACEHOLDER ★
+  如需使用自定义图片替代下方 emoji，请替换为：
+  <img src="你的表情包URL" alt="error" style="width:120px;height:auto;border-radius:12px;margin-bottom:0.6rem;" />
+*/
+.modal-box .error-text {
+  color: #ff6b6b;
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 1.2rem;
+  letter-spacing: 0.05em;
+}
+.modal-box .retry-btn {
+  padding: 0.7rem 2.2rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #ff5252, #c62828);
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  letter-spacing: 0.08em;
+  box-shadow: 0 0 20px rgba(255,82,82,0.3);
+}
+.modal-box .retry-btn:active { transform: scale(0.94); }
+
+/* ================================================================
+   SCREEN 4: 梦幻申请页
+   ================================================================ */
+#screen4 {
+  background: linear-gradient(135deg, #2d1b3e 0%, #1a1030 20%, #3e1f47 40%, #1a1030 60%, #2a1538 80%, #1a0a28 100%);
+  position: relative;
+}
+#screen4::before {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(circle at 20% 30%, rgba(255,183,197,0.08) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(192,132,252,0.07) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(255,215,0,0.04) 0%, transparent 60%);
+  pointer-events: none;
+}
+/* Stars */
+#screen4 .stars {
+  position: absolute; inset: 0;
+  pointer-events: none; z-index: 1;
+}
+#screen4 .star {
+  position: absolute;
+  width: 3px; height: 3px;
+  background: #fff;
+  border-radius: 50%;
+  animation: twinkle var(--dur) ease-in-out infinite;
+  animation-delay: var(--delay);
+  opacity: 0;
+}
+#screen4 .heart-float {
+  position: absolute;
+  font-size: 1.2rem;
+  opacity: 0.35;
+  pointer-events: none;
+  animation: heartRise var(--dur) ease-in infinite;
+  animation-delay: var(--delay);
+}
+
+#screen4 .card-wrap {
+  position: relative; z-index: 3;
+  text-align: center;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+#screen4 .card-wrap.fading {
+  opacity: 0;
+  transform: translateY(-15px);
+}
+#screen4 .main-text {
+  font-size: clamp(1.2rem, 4.5vw, 1.6rem);
+  font-weight: 700;
+  background: linear-gradient(135deg, #ffb7c5, #e1bee7, #ce93d8, #f8bbd0);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 0 12px rgba(255,183,197,0.5));
+  margin-bottom: 1.6rem;
+  line-height: 1.4;
+  letter-spacing: 0.05em;
+}
+#screen4 .dreamy-btn {
+  display: inline-block;
+  padding: 1rem 2.6rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #e91e63, #9c27b0, #673ab7);
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  letter-spacing: 0.1em;
+  box-shadow:
+    0 0 30px rgba(233,30,99,0.4),
+    0 0 60px rgba(156,39,176,0.25),
+    0 6px 20px rgba(0,0,0,0.3);
+  animation: floatBtn 3s ease-in-out infinite;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+#screen4 .dreamy-btn:active {
+  transform: scale(0.93);
+  box-shadow: 0 0 20px rgba(233,30,99,0.5), 0 0 40px rgba(156,39,176,0.3);
+}
+#screen4 .big-btn {
+  padding: 1.1rem 3rem;
+  font-size: 1.3rem;
+}
+#screen4 .apply-content {
+  font-size: clamp(1rem, 3.8vw, 1.3rem);
+  color: #f8bbd0;
+  text-shadow: 0 0 10px rgba(248,187,208,0.4);
+  margin-bottom: 1.6rem;
+  letter-spacing: 0.05em;
+  line-height: 1.5;
+}
+
+/* ================================================================
+   SCREEN 5: 终极祝福界面
+   ================================================================ */
+#screen5 {
+  background: linear-gradient(180deg, #1a0a20 0%, #2d1b35 30%, #1a1030 60%, #0d0a1a 100%);
+  justify-content: center;
+  overflow-y: auto;
+  padding: 1rem 1rem 2rem;
+}
+/* Confetti / Hearts */
+#screen5 .confetti-wrap {
+  position: absolute; inset: 0;
+  pointer-events: none; z-index: 1;
+  overflow: hidden;
+}
+#screen5 .confetti {
+  position: absolute;
+  width: 8px; height: 8px;
+  border-radius: 2px;
+  animation: confettiFall var(--dur) linear infinite;
+  animation-delay: var(--delay);
+  top: -20px;
+  opacity: 0.7;
+}
+#screen5 .heart-particle {
+  position: absolute;
+  font-size: 1rem;
+  animation: heartFall var(--dur) ease-in infinite;
+  animation-delay: var(--delay);
+  opacity: 0.5;
+  top: -30px;
+  pointer-events: none;
+}
+
+/* Envelope */
+#screen5 .envelope-wrap {
+  position: relative; z-index: 3;
+  text-align: center;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  cursor: pointer;
+}
+#screen5 .envelope {
+  width: min(220px, 55vw);
+  height: auto;
+  aspect-ratio: 4/3;
+  background: linear-gradient(135deg, #f5e6c8, #e8d5a3, #f0dbb8);
+  border-radius: 16px;
+  position: relative;
+  margin: 0 auto 1rem;
+  box-shadow:
+    0 8px 30px rgba(0,0,0,0.3),
+    inset 0 1px 0 rgba(255,255,255,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+#screen5 .envelope::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 0; height: 0;
+  border-style: solid;
+  border-width: 0 min(220px, 55vw) min(110px, 27.5vw) 0;
+  border-color: transparent #c9a96e transparent transparent;
+  pointer-events: none;
+}
+#screen5 .seal {
+  position: absolute;
+  z-index: 2;
+  width: min(42px, 10vw);
+  height: min(42px, 10vw);
+  background: radial-gradient(circle, #c62828, #8e0000);
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3), inset 0 0 8px rgba(255,255,255,0.2);
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+}
+#screen5 .seal::after {
+  content: '❤';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  color: #ffd700;
+  font-size: clamp(0.8rem, 2.5vw, 1rem);
+}
+#screen5 .envelope-hint {
+  color: #f5e6c8;
+  font-size: 0.9rem;
+  letter-spacing: 0.1em;
+  opacity: 0.75;
+  animation: float 2s ease-in-out infinite;
+}
+
+/* Letter */
+#screen5 .letter-wrap {
+  position: relative; z-index: 3;
+  width: 100%;
+  max-width: 500px;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+/* Letter 1 */
+#screen5 .letter1 {
+  width: 100%;
+  background: linear-gradient(135deg, #fef9e7 0%, #fdf3d0 30%, #fef7e0 60%, #fdf2cc 100%);
+  border-radius: 8px;
+  padding: 1.8rem 1.2rem 1.2rem;
+  box-shadow:
+    0 4px 20px rgba(0,0,0,0.25),
+    inset 0 0 60px rgba(139,119,80,0.08);
+  position: relative;
+  color: #4a3728;
+  font-size: clamp(0.82rem, 2.6vw, 0.95rem);
+  line-height: 1.8;
+  letter-spacing: 0.03em;
+  /* Decorative pattern */
+  background-image:
+    radial-gradient(circle at 20% 15%, rgba(200,180,140,0.12) 0%, transparent 35%),
+    radial-gradient(circle at 80% 85%, rgba(180,160,130,0.1) 0%, transparent 35%),
+    repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(139,119,80,0.04) 40px, rgba(139,119,80,0.04) 41px);
+}
+#screen5 .letter1 .small-text {
+  font-size: clamp(0.65rem, 2vw, 0.75rem);
+  color: #8b7750;
+  font-style: italic;
+  letter-spacing: 0.02em;
+  line-height: 1.6;
+}
+#screen5 .letter1 .body-text {
+  color: #4a3728;
+  font-size: clamp(0.82rem, 2.6vw, 0.95rem);
+  line-height: 1.8;
+  letter-spacing: 0.03em;
+}
+#screen5 .letter1 .expand-btn {
+  display: inline-block;
+  margin-top: 0.8rem;
+  padding: 0.6rem 1.6rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #4a3728;
+  background: linear-gradient(135deg, #f5e6c8, #e8d5a3);
+  border: 1.5px solid #c9a96e;
+  border-radius: 30px;
+  cursor: pointer;
+  letter-spacing: 0.06em;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+}
+#screen5 .letter1 .expand-btn:active {
+  transform: scale(0.95);
+  background: #e8d5a3;
+}
+
+/* Letter 2 */
+#screen5 .letter2 {
+  width: 100%;
+  background: linear-gradient(135deg, #fff5f5 0%, #ffe8ec 25%, #fff0f3 50%, #ffe4e8 75%, #fff5f5 100%);
+  border-radius: 8px;
+  padding: 1.8rem 1.2rem 1.2rem;
+  box-shadow:
+    0 4px 20px rgba(0,0,0,0.2),
+    inset 0 0 60px rgba(180,120,130,0.06);
+  position: relative;
+  color: #5d3a44;
+  font-size: clamp(0.82rem, 2.6vw, 0.95rem);
+  line-height: 1.8;
+  letter-spacing: 0.03em;
+  /* Soft floral pattern */
+  background-image:
+    radial-gradient(circle at 15% 20%, rgba(255,182,193,0.1) 0%, transparent 30%),
+    radial-gradient(circle at 85% 75%, rgba(255,182,193,0.08) 0%, transparent 30%),
+    radial-gradient(circle at 50% 50%, rgba(255,228,225,0.06) 0%, transparent 50%);
+}
+#screen5 .letter2 .body-text {
+  color: #5d3a44;
+  line-height: 1.9;
+}
+#screen5 .letter2 .quote-text {
+  font-size: clamp(0.65rem, 2vw, 0.75rem);
+  color: #8b6b75;
+  font-style: italic;
+  text-align: right;
+  margin-top: 0.8rem;
+  letter-spacing: 0.03em;
+  line-height: 1.5;
+}
+#screen5 .letter2 .treasure-btn {
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 0.6rem 1.8rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #5d3a44;
+  background: linear-gradient(135deg, #ffe4e1, #ffc1cc);
+  border: 1.5px solid #e8a0b0;
+  border-radius: 30px;
+  cursor: pointer;
+  letter-spacing: 0.06em;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+#screen5 .letter2 .treasure-btn:active {
+  transform: scale(0.95);
+  background: #ffc1cc;
+}
+
+/* Final Modal */
+.final-modal-overlay {
+  position: fixed; top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 200;
+  background: rgba(0,0,0,0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+.final-modal-overlay.show {
+  opacity: 1; pointer-events: auto;
+}
+.final-modal-box {
+  background: linear-gradient(135deg, #3e1f47, #5d2e5f);
+  border: 2px solid rgba(255,183,197,0.5);
+  border-radius: 20px;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  width: min(280px, 75vw);
+  box-shadow: 0 0 50px rgba(255,107,157,0.3);
+}
+.final-modal-box .treasure-emoji {
+  font-size: 3.5rem;
+  margin-bottom: 0.6rem;
+  animation: float 2s ease-in-out infinite;
+}
+.final-modal-box .treasure-text {
+  color: #f8bbd0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+/* ============ Keyframes ============ */
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulseGlow {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.3); }
+}
+@keyframes levelUpShake {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  10% { transform: translate(calc(-50% - 8px), calc(-50% + 0px)) scale(1.05); }
+  20% { transform: translate(calc(-50% + 8px), calc(-50% - 2px)) scale(1.08); }
+  30% { transform: translate(calc(-50% - 5px), calc(-50% + 2px)) scale(1.04); }
+  40% { transform: translate(calc(-50% + 5px), calc(-50% - 1px)) scale(1.07); }
+  50% { transform: translate(-50%, -50%) scale(1.1); }
+  60% { transform: translate(calc(-50% - 3px), calc(-50% + 1px)) scale(1.03); }
+  70% { transform: translate(calc(-50% + 3px), calc(-50% - 1px)) scale(1.06); }
+  80% { transform: translate(-50%, -50%) scale(1.02); }
+  90% { transform: translate(-50%, -50%) scale(1.04); }
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@keyframes floatBtn {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+@keyframes twinkle {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 0.8; }
+}
+@keyframes heartRise {
+  0% { transform: translateY(0) scale(0.5); opacity: 0.5; }
+  50% { opacity: 0.6; }
+  100% { transform: translateY(-80vh) scale(1.2); opacity: 0; }
+}
+@keyframes confettiFall {
+ 0% { transform: translateY(-20px) rotate(0deg); opacity: 0.7; }
+ 100% { transform: translateY(105vh) rotate(720deg); opacity: 0; }
+}
+@keyframes heartFall {
+ 0% { transform: translateY(-30px) rotate(0deg); opacity: 0.5; }
+ 100% { transform: translateY(105vh) rotate(360deg); opacity: 0; }
+}
+@keyframes orbPulse {
+  0%, 100% { opacity: 0.6; transform: translate(-50%,-50%) scale(1); }
+  50% { opacity: 1; transform: translate(-50%,-50%) scale(1.15); }
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ============ SCREEN 1: 华丽升级动画 ============ -->
+  <div class="screen active" id="screen1">
+    <canvas id="particleCanvas"></canvas>
+    <div class="level-display">
+      <div class="player-name">🌍 地球Online用户 喻子懿</div>
+      <div class="level-number" id="levelNum">Lv19</div>
+      <div class="level-label">E A R T H · O N L I N E</div>
+    </div>
+    <div class="level-up-text" id="levelUpText">LEVEL UP!</div>
+    <div class="sub-text" id="levelSubText">成功晋级 · Lv20</div>
+    <div class="exp-bar-container">
+      <div class="exp-bar-label"><span>EXP</span><span id="expPercent">99%</span></div>
+      <div class="exp-bar-outer">
+        <div class="exp-bar-inner" id="expBar"></div>
+      </div>
+    </div>
+    <button class="continue-btn" id="screen1Continue">继 续</button>
+  </div>
+
+  <!-- ============ SCREEN 2: 过渡页 ============ -->
+  <div class="screen" id="screen2">
+    <div class="content">
+      <div class="icon-row">🌍✨</div>
+      <div class="title">地球Online检测到另一名玩家</div>
+      <div class="subtitle">为你的晋级留下了真挚的祝福</div>
+      <div class="hint">请完成以下考验来获得祝福 👇</div>
+      <div class="btn-row">
+        <button id="btnAccept">接受考验</button>
+        <button id="btnSerious">严肃接受考验</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SCREEN 3: 三道选择题 ============ -->
+  <div class="screen" id="screen3">
+    <div class="progress-wrap">
+      <div class="progress-label"><span>祝福解锁进度</span><span id="progressPercent">0%</span></div>
+      <div class="progress-bar-outer">
+        <div class="progress-bar-inner" id="progressBar"></div>
+      </div>
+    </div>
+    <div class="question-card" id="questionCard">
+      <div class="question-num" id="qNum">第 1/3 题</div>
+      <div class="question-text" id="qText"></div>
+      <div class="options" id="qOptions"></div>
+      <div class="tease-text" id="qTease"></div>
+    </div>
+  </div>
+
+  <!-- Error Modal -->
+  <div class="modal-overlay" id="errorModal">
+    <div class="modal-box">
+      <!-- ★ ERROR_IMAGE_PLACEHOLDER ★ 替换下方 div 为你的表情包图片 -->
+      <div class="error-emoji">👎😤</div>
+      <div class="error-text">答错啦！再想想吧~</div>
+      <button class="retry-btn" id="retryBtn">再试一次</button>
+    </div>
+  </div>
+
+  <!-- ============ SCREEN 4: 梦幻申请页 ============ -->
+  <div class="screen" id="screen4">
+    <div class="stars" id="screen4Stars"></div>
+    <div class="card-wrap" id="cardStep1">
+      <div class="main-text">玩家 dk 向你发出申请</div>
+      <button class="dreamy-btn" id="btnView">📩 查看</button>
+    </div>
+    <div class="card-wrap" id="cardStep2" style="display:none;">
+      <div class="apply-content">玩家 dk 申请参与您往后的人生进程</div>
+      <button class="dreamy-btn big-btn" id="btnIWish">💗 我愿意</button>
+    </div>
+  </div>
+
+  <!-- ============ SCREEN 5: 终极祝福界面 ============ -->
+  <div class="screen" id="screen5">
+    <div class="confetti-wrap" id="confettiWrap"></div>
+    <!-- Step 1: Envelope -->
+    <div class="envelope-wrap" id="envelopeWrap">
+      <div class="envelope">
+        <div class="seal"></div>
+      </div>
+      <div class="envelope-hint">💌 点击打开</div>
+    </div>
+    <!-- Step 2: Letter 1 -->
+    <div class="letter-wrap" id="letter1Wrap" style="display:none;">
+      <div class="letter1">
+        <p class="small-text">（这可是我陪你过的第一个生日（虽然肯定不是最后一个！）不管期末周多忙都得好好纪念一下，思来想去最后做了这个前端网页放了我的祝福，电子版耶，还便于保存，不愧是我）</p>
+        <p class="body-text" style="margin-top:0.6rem;">亲爱的喻子懿，恭喜你，成功解锁人生的新关卡，生日快乐！</p>
+        <p class="body-text" style="margin-top:0.6rem;">还是有遗憾，要是今天没有考试就好了，我就能陪着你了，该死的期末周！</p>
+        <p class="body-text" style="margin-top:0.6rem;">写这些的时候我突然想起来我之前看的一篇随笔。里面说人与人之间是相互渗透的，或许你所谓的你，只是无数人留下的波纹在那一刻恰好构成了你。不无道理，所以我希望我是你此刻最汹涌的那一圈涟漪。</p>
+        <p class="body-text" style="margin-top:0.6rem;">不管怎么说，时间都不会停下脚步。不只是时间，你，我，也在向前。</p>
+        <p class="body-text" style="margin-top:0.6rem;">而幸福是两双眼睛看向一个未来，亲爱的，欢迎来到20岁</p>
+        <p class="small-text" style="margin-top:0.8rem;">后面还有我的一点碎碎念，要是语句不太通顺那就是太激动了没注意！→</p>
+        <div style="text-align:center;">
+          <button class="expand-btn" id="btnExpandNote">📖 展开碎碎念</button>
+        </div>
+      </div>
+    </div>
+    <!-- Step 3: Letter 2 -->
+    <div class="letter-wrap" id="letter2Wrap" style="display:none;">
+      <div class="letter2">
+        <p class="body-text">我感觉自己真的很幸运，你像礼物一样出现在我的生命里。其实我不太擅长表达感情也是一个特别怕麻烦的人，可是你说的话让居然我开始敢于去表达自己了。我远比你想象中更需要你更在意你，你总是能包容我的脾气和无由来的小烦躁，理解我莫名其妙的行为和想法。你不在我身边的时候我每天都在想着什么时候能和你见面，我对你的爱只会越来越深，所以不见面的日子你必须和我分享身边的所有事！哪怕很小的事我也要听！</p>
+        <p class="body-text" style="margin-top:0.8rem;">因为我喜欢你。我喜欢调戏你，喜欢你跟我说晚安，喜欢梦里有你，喜欢躺在你怀里，喜欢抱着你，喜欢熬夜时你催促我睡觉，喜欢每天早上醒来看到你发的消息，喜欢看到你发的照片，喜欢你随时关心我，喜欢你来找我，喜欢你让我多吃点，喜欢你转发给我的视频，喜欢你给我分享生活的一切。</p>
+        <p class="body-text" style="margin-top:0.8rem;">我爱你</p>
+        <p class="quote-text">"人们总在度过一个圆满的周期时庆祝曾经的开始。时间重叠、飞跃，令人恍惚，所幸我们共度的时光鲜明而真切"</p>
+        <div style="text-align:center;">
+          <button class="treasure-btn" id="btnTreasure">💌 珍藏这份心意</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Final Modal -->
+  <div class="final-modal-overlay" id="finalModal">
+    <div class="final-modal-box">
+      <div class="treasure-emoji">💌</div>
+      <div class="treasure-text">永远珍藏❤️</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  /* ==================== 占位符 / 配置 ==================== */
+  // ★ 如需修改寿星名字，请修改下方 USER_NAME（也请同步修改 HTML 中的文本）
+  var USER_NAME = '喻子懿';
+
+  /* ==================== 工具函数 ==================== */
+  function $(id) { return document.getElementById(id); }
+  function switchScreen(fromId, toId) {
+    var from = $(fromId), to = $(toId);
+    if (from) { from.classList.remove('active'); from.classList.add('fade-out'); }
+    if (to)   { to.classList.add('active'); to.scrollTop = 0; }
+    // 清理旧状态
+    setTimeout(function() {
+      if (from) from.classList.remove('fade-out');
+    }, 600);
+  }
+
+  /* ==================== SCREEN 1: 升级动画 ==================== */
+  var canvas, ctx, particles = [], animId;
+  var levelNumEl = $('levelNum');
+  var expBarEl = $('expBar');
+  var expPercentEl = $('expPercent');
+  var levelUpTextEl = $('levelUpText');
+  var levelSubTextEl = $('levelSubText');
+  var continueBtn = $('screen1Continue');
+
+  function initParticles() {
+    canvas = $('particleCanvas');
+    if (!canvas) return;
+    ctx = canvas.getContext('2d');
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+  }
+
+  function resizeCanvas() {
+    if (!canvas) return;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+
+  function spawnBurstParticles() {
+    if (!ctx) return;
+    var cx = canvas.width / 2, cy = canvas.height * 0.38;
+    for (var i = 0; i < 120; i++) {
+      var angle = Math.random() * Math.PI * 2;
+      var speed = 2 + Math.random() * 6;
+      particles.push({
+        x: cx, y: cy,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - 1,
+        life: 1,
+        decay: 0.006 + Math.random() * 0.015,
+        size: 1.5 + Math.random() * 3.5,
+        color: ['#ffd700','#ffaa00','#00e5ff','#ff6b9d','#c084fc','#fff'][Math.floor(Math.random()*6)]
+      });
+    }
+  }
+
+  function updateParticles() {
+    if (!ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (var i = particles.length - 1; i >= 0; i--) {
+      var p = particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.04;
+      p.life -= p.decay;
+      if (p.life <= 0) { particles.splice(i,1); continue; }
+      ctx.globalAlpha = p.life;
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function particleLoop() {
+    updateParticles();
+    if (particles.length > 0) {
+      animId = requestAnimationFrame(particleLoop);
+    } else {
+      animId = null;
+    }
+  }
+
+  function startParticles() {
+    spawnBurstParticles();
+    if (!animId) particleLoop();
+    // 持续生成
+    var burstCount = 0;
+    var interval = setInterval(function() {
+      burstCount++;
+      if (burstCount > 5) { clearInterval(interval); return; }
+      spawnBurstParticles();
+      if (!animId) particleLoop();
+    }, 350);
+  }
+
+  function animateExpBar() {
+    // 先显示 99%
+    expBarEl.style.width = '60%';
+    expPercentEl.textContent = '60%';
+
+    // 延迟开始充能到100%
+    setTimeout(function() {
+      expBarEl.style.width = '99%';
+      expPercentEl.textContent = '99%';
+    }, 300);
+
+    setTimeout(function() {
+      expBarEl.style.width = '100%';
+      expBarEl.classList.add('filled');
+      expPercentEl.textContent = '100%';
+      // 爆发特效
+      levelUpTextEl.classList.add('show');
+      levelSubTextEl.classList.add('show');
+      continueBtn.classList.add('show');
+      startParticles();
+      // 数字跳动
+      animateLevelNum();
+    }, 1200);
+  }
+
+  function animateLevelNum() {
+    var steps = ['Lv19', 'Lv19→', 'Lv19⚡','Lv20'];
+    var stepDelays = [0, 180, 360, 540];
+    steps.forEach(function(txt, i) {
+      setTimeout(function() {
+        levelNumEl.textContent = txt;
+        if (i === steps.length - 1) {
+          levelNumEl.style.animation = 'pulseGlow 1s ease-in-out 3';
+          setTimeout(function() {
+            levelNumEl.style.animation = 'pulseGlow 1.5s ease-in-out infinite';
+          }, 3000);
+        }
+      }, stepDelays[i]);
+    });
+  }
+
+  function initScreen1() {
+    initParticles();
+    // 初始显示
+    levelNumEl.textContent = 'Lv19';
+    expBarEl.style.width = '0%';
+    expPercentEl.textContent = '0%';
+    levelUpTextEl.classList.remove('show');
+    levelSubTextEl.classList.remove('show');
+    continueBtn.classList.remove('show');
+
+    // 页面加载后触发
+    setTimeout(animateExpBar, 500);
+  }
+
+  continueBtn.addEventListener('click', function() {
+    switchScreen('screen1', 'screen2');
+  });
+
+  /* ==================== SCREEN 2: 过渡页 ==================== */
+  $('btnAccept').addEventListener('click', function() {
+    switchScreen('screen2', 'screen3');
+    initScreen3();
+  });
+  $('btnSerious').addEventListener('click', function() {
+    switchScreen('screen2', 'screen3');
+    initScreen3();
+  });
+
+  /* ==================== SCREEN 3: 选择题 ==================== */
+  var quizData = [
+    {
+      question: '以下哪种食物是玩家dk讨厌的食物？',
+      options: ['A. 黄瓜', 'B. 龙虾', 'C. 香菜'],
+      correct: 2,
+      tease: '玩家dk：答错了你以后就天天吃茄子吧😄'
+    },
+    {
+      question: '以下哪个是玩家dk最近在玩的游戏？',
+      options: ['A. 我的世界', 'B. 洛克王国', 'C. 鸣潮'],
+      correct: 1,
+      tease: '玩家dk：讨厌期末周，想玩游戏😭'
+    },
+    {
+      question: '玩家dk的npc妹妹叫什么？',
+      options: ['A. 邓雨菲', 'B. 邓宇飞', 'C. 邓雨霏'],
+      correct: 0,
+      tease: '玩家dk：有点难度，没事，错了我不告诉她'
+    }
+  ];
+  var currentQ = 0;
+  var correctCount = 0;
+  var wrongMarked = [false, false, false];
+
+  function initScreen3() {
+    currentQ = 0;
+    correctCount = 0;
+    wrongMarked = [false, false, false];
+    updateProgress();
+    renderQuestion();
+  }
+
+  function updateProgress() {
+    var pct = Math.round((correctCount / 3) * 100);
+    $('progressPercent').textContent = pct + '%';
+    $('progressBar').style.width = pct + '%';
+
+    if (correctCount >= 3) {
+      setTimeout(function() {
+        switchScreen('screen3', 'screen4');
+        initScreen4();
+      }, 700);
+    }
+  }
+
+  function renderQuestion() {
+    if (currentQ >= quizData.length) return;
+    var q = quizData[currentQ];
+    $('qNum').textContent = '第 ' + (currentQ + 1) + '/3 题';
+    $('qText').textContent = q.question;
+    $('qTease').textContent = q.tease;
+
+    var optHTML = '';
+    q.options.forEach(function(opt, idx) {
+      var extraClass = '';
+      if (wrongMarked[currentQ] && idx !== q.correct) {
+        // 不预标记，只在点错时标记
+      }
+      optHTML += '<button class="option-btn" data-idx="'+idx+'">'+opt+'</button>';
+    });
+    $('qOptions').innerHTML = optHTML;
+
+    // 绑定事件
+    var btns = $('qOptions').querySelectorAll('.option-btn');
+    btns.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var idx = parseInt(this.getAttribute('data-idx'));
+        handleAnswer(idx, btns);
+      });
+    });
+  }
+
+  function handleAnswer(idx, btns) {
+    var q = quizData[currentQ];
+    if (idx === q.correct) {
+      // 正确
+      btns.forEach(function(b) { b.classList.add('disabled'); });
+      btns[idx].classList.add('correct');
+      correctCount++;
+      updateProgress();
+      // 切换到下一题
+      setTimeout(function() {
+        currentQ++;
+        if (currentQ < quizData.length) {
+          renderQuestion();
+        }
+      }, 600);
+    } else {
+      // 错误
+      btns[idx].classList.add('wrong');
+      wrongMarked[currentQ] = true;
+      showErrorModal();
+    }
+  }
+
+  function showErrorModal() {
+    $('errorModal').classList.add('show');
+  }
+
+  $('retryBtn').addEventListener('click', function() {
+    $('errorModal').classList.remove('show');
+    // 清除错误标记
+    var btns = $('qOptions').querySelectorAll('.option-btn');
+    btns.forEach(function(b) { b.classList.remove('wrong'); });
+  });
+
+  /* ==================== SCREEN 4: 梦幻申请页 ==================== */
+  function initScreen4() {
+    // 生成星星
+    generateStars();
+    // 重置状态
+    $('cardStep1').style.display = '';
+    $('cardStep1').classList.remove('fading');
+    $('cardStep2').style.display = 'none';
+    $('cardStep2').classList.remove('fading');
+  }
+
+  function generateStars() {
+    var container = $('screen4Stars');
+    if (!container) return;
+    var html = '';
+    for (var i = 0; i < 45; i++) {
+      var x = Math.random() * 100;
+      var y = Math.random() * 100;
+      var dur = 1.2 + Math.random() * 2.5;
+      var delay = Math.random() * 3;
+      var size = 1.5 + Math.random() * 2.5;
+      html += '<div class="star" style="left:'+x+'%;top:'+y+'%;width:'+size+'px;height:'+size+'px;--dur:'+dur+'s;--delay:'+delay+'s;"></div>';
+    }
+    // 爱心气泡
+    for (var j = 0; j < 12; j++) {
+      var hx = 5 + Math.random() * 90;
+      var hy = 40 + Math.random() * 60;
+      var hdur = 3 + Math.random() * 5;
+      var hdelay = Math.random() * 6;
+      var hearts = ['💕','💖','💗','💝','✨','💫','🫧'];
+      html += '<div class="heart-float" style="left:'+hx+'%;top:'+hy+'%;--dur:'+hdur+'s;--delay:'+hdelay+'s;">'+hearts[Math.floor(Math.random()*hearts.length)]+'</div>';
+    }
+    container.innerHTML = html;
+  }
+
+  $('btnView').addEventListener('click', function() {
+    var step1 = $('cardStep1');
+    var step2 = $('cardStep2');
+    step1.classList.add('fading');
+    setTimeout(function() {
+      step1.style.display = 'none';
+      step2.style.display = '';
+      step2.classList.remove('fading');
+    }, 500);
+  });
+
+  $('btnIWish').addEventListener('click', function() {
+    switchScreen('screen4', 'screen5');
+    initScreen5();
+  });
+
+  /* ==================== SCREEN 5: 终极祝福界面 ==================== */
+  function initScreen5() {
+    // 重置
+    $('envelopeWrap').style.display = '';
+    $('envelopeWrap').style.opacity = '1';
+    $('letter1Wrap').style.display = 'none';
+    $('letter2Wrap').style.display = 'none';
+    // 生成彩带和爱心
+    generateConfetti();
+  }
+
+  function generateConfetti() {
+    var wrap = $('confettiWrap');
+    if (!wrap) return;
+    var html = '';
+    var colors = ['#ffd700','#ff6b9d','#c084fc','#00e5ff','#ff8a65','#81c784','#ffb74d','#f8bbd0','#ce93d8','#fff176'];
+    for (var i = 0; i < 40; i++) {
+      var x = Math.random() * 100;
+      var dur = 3 + Math.random() * 6;
+      var delay = Math.random() * 8;
+      var color = colors[Math.floor(Math.random()*colors.length)];
+      var w = 5 + Math.random() * 10;
+      var h = 4 + Math.random() * 8;
+      html += '<div class="confetti" style="left:'+x+'%;background:'+color+';width:'+w+'px;height:'+h+'px;--dur:'+dur+'s;--delay:'+delay+'s;"></div>';
+    }
+    for (var j = 0; j < 15; j++) {
+      var hx = Math.random() * 100;
+      var hdur = 4 + Math.random() * 6;
+      var hdelay = Math.random() * 8;
+      var emojis = ['❤️','💕','💖','✨','🌟','🎈','🎉','🎊','💝','🫧'];
+      html += '<div class="heart-particle" style="left:'+hx+'%;--dur:'+hdur+'s;--delay:'+hdelay+'s;">'+emojis[Math.floor(Math.random()*emojis.length)]+'</div>';
+    }
+    wrap.innerHTML = html;
+  }
+
+  // 点击信封 → 显示第一张信纸
+  $('envelopeWrap').addEventListener('click', function() {
+    var env = $('envelopeWrap');
+    var l1 = $('letter1Wrap');
+    env.style.opacity = '0';
+    env.style.transform = 'scale(0.95)';
+    setTimeout(function() {
+      env.style.display = 'none';
+      l1.style.display = '';
+      l1.style.opacity = '0';
+      l1.style.transform = 'translateY(30px)';
+      requestAnimationFrame(function() {
+        l1.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+        l1.style.opacity = '1';
+        l1.style.transform = 'translateY(0)';
+      });
+    }, 500);
+  });
+
+  // 展开碎碎念 → 第二张信纸
+  $('btnExpandNote').addEventListener('click', function() {
+    var l1 = $('letter1Wrap');
+    var l2 = $('letter2Wrap');
+    l1.style.opacity = '0';
+    l1.style.transform = 'translateY(-30px)';
+    setTimeout(function() {
+      l1.style.display = 'none';
+      l2.style.display = '';
+      l2.style.opacity = '0';
+      l2.style.transform = 'translateY(40px)';
+      requestAnimationFrame(function() {
+        l2.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+        l2.style.opacity = '1';
+        l2.style.transform = 'translateY(0)';
+      });
+    }, 500);
+  });
+
+  // 珍藏按钮
+  $('btnTreasure').addEventListener('click', function() {
+    $('finalModal').classList.add('show');
+    setTimeout(function() {
+      $('finalModal').classList.remove('show');
+    }, 2000);
+  });
+
+  // 点击弹窗关闭
+  $('finalModal').addEventListener('click', function() {
+    this.classList.remove('show');
+  });
+
+  /* ==================== 启动 ==================== */
+  initScreen1();
+
+})();
+</script>
+</body>
+</html>
